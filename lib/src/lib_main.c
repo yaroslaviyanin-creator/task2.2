@@ -8,6 +8,11 @@ lib_main.c - главный модуль библиотеки.
 // <chunk> - Указатель на буфер
 // <bytes_available> - кол-во байтов которые мы считали из файла
 // <group_size> - размер буфера
+
+#include <stdio.h>
+#include <stdlib.h>
+#include "config.h"
+
 void print_hex_group(const unsigned char* chunk, int bytes_available, int group_size) {
     const char hex_chars[] = "0123456789ABCDEF";
     // Little-Endian:
@@ -23,4 +28,57 @@ void print_hex_group(const unsigned char* chunk, int bytes_available, int group_
         // Выводим
         printf("%c%c", high_nibble, low_nibble);
     }
+}
+
+
+void process_file(const char* filepath, Config* cfg) {
+    // Открываем файл
+    FILE* file = fopen(filepath, "rb");
+    if (file == NULL) {
+        fprintf(stderr, "Error: Cannot open file '%s'\n", filepath);
+        return;
+    }
+
+    // Сдвигаем указатель на offset
+    if (cfg->offset > 0) fseek(file, cfg->offset, SEEK_SET);
+
+    // Вычисляем размер буфера для одной строки вывода и выделяем память
+    int line_size = cfg->group_size * cfg->count;               // line_size - кол-во байт нужное для считывания за блок
+    unsigned char* buffer = (unsigned char*)malloc(line_size);
+    if (buffer == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        fclose(file);
+        return;
+    }
+
+
+    int total_read = 0;                 // Сколько байт мы уже прочитали суммарно
+
+    // 
+    while (1) {
+        // Проверяем ограничение по количеству выводимых из файла байт (-l)
+        if (cfg->length != -1 && total_read >= cfg->length) {
+            break;
+        }
+
+        // Вычисляем, сколько байт нам нужно прочитать на этом шаге
+        int bytes_to_read = line_size;                                      // bytes_to_read - кол-во байт которое считаем из файла на этом шаге
+        if (cfg->length != -1 && (cfg->length - total_read) < line_size) {
+            // Если до лимита осталось меньше, чем размер полной строки
+            bytes_to_read = cfg->length - total_read;
+        }
+
+        // Читаем данные в буфер
+        size_t bytes_read = fread(buffer, 1, bytes_to_read, file);
+        if (bytes_read == 0) {
+            break; // Конец файла или ошибка чтения
+        }
+
+        // Обновляем счетчики
+        total_read += bytes_read;
+    }
+
+    // Очищаем память и закрываем файл
+    free(buffer);
+    fclose(file);
 }

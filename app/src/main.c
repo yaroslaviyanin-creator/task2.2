@@ -8,6 +8,7 @@ main.c - главный модуль программы.
 #include <stdlib.h>
 #include "getopt.h"
 #include "config.h"
+#include "lib_main.h"
 
 int main(int argc, char* argv[]) {
     // Инициализируем структуру значениями по умолчанию
@@ -64,12 +65,18 @@ int main(int argc, char* argv[]) {
         }
     }
 
+
+
     // Проверка, есть ли имя файла, либо директория
     if (cfg.file_name == NULL && cfg.dir == NULL) {
         fprintf(stderr, "Error: input file (-i) or directory (-d) must be specified.\n");
         return 1;
     }
 
+    // Проверка, есть ли имя файла
+    if (cfg.file_name != NULL) {
+        process_file(cfg.file_name, &cfg);
+    }
 
     // Тесты
     // Тест считывания аргументов
