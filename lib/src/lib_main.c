@@ -30,6 +30,57 @@ void print_hex_group(const unsigned char* chunk, int bytes_available, int group_
 }
 
 
+// Функция для вывод на экран
+// <buffer> - Указатель на массив считанных байтов
+// <bytes_read> - Количество реально считанных байтов, находящихся в буфере
+// <current_offset> - Текущее смещение от начала файла
+// <cfg> - Указатель на структуру с аргументамми
+void print_standard_format(const unsigned char* buffer, int bytes_read, int current_offset, Config* cfg) {
+    // Выводим текущее смещение
+    printf("%08x: ", current_offset);
+
+    // Выводим шестнадцатеричные группы
+    for (int i = 0; i < cfg->count; i++) {
+        int group_start = i * cfg->group_size;
+
+        if (group_start >= bytes_read) {
+            // Если данные закончились, но строка не полная, печатаем пробелы для выравнивания
+            // Каждый кусок занимает (group_size * 2) символов + 1 пробел
+            for (int j = 0; j < cfg->group_size * 2 + 1; j++) {
+                printf(" ");
+            }
+            continue;
+        }
+
+        // Вычисляем, сколько байт доступно для текущей группы
+        int chunk_bytes = bytes_read - group_start;
+        if (chunk_bytes > cfg->group_size) {
+            chunk_bytes = cfg->group_size;
+        }
+
+        print_hex_group(&buffer[group_start], chunk_bytes, cfg->group_size);
+        printf(" "); // Пробел между группами
+    }
+
+    // Если group_size == 1, то выводим символьное представление
+    if (cfg->group_size == 1) {
+        printf(" |");
+        for (int i = 0; i < bytes_read; i++) {
+            unsigned char c = buffer[i];
+            // Печатаем только видимые символы ASCII (от 32 до 126)
+            if (c >= 32 && c <= 126) {
+                printf("%c", c);
+            }
+            else {
+                printf("."); // Непечатные символы заменяем точкой
+            }
+        }
+        printf("|");
+    }
+    printf("\n");
+}
+
+
 void process_file(const char* filepath, Config* cfg) {
     // Открываем файл
     FILE* file = fopen(filepath, "rb");
@@ -64,7 +115,8 @@ void process_file(const char* filepath, Config* cfg) {
     int current_offset = cfg->offset;   // Наше положение в файле
     int total_read = 0;                 // Сколько байт мы уже прочитали суммарно
 
-    // 
+
+    // Главный цикл чтения файла блоками с учетом лимита (-l) и конца файла
     while (1) {
         // Проверяем ограничение по количеству выводимых из файла байт (-l)
         if (cfg->length != -1 && total_read >= cfg->length) {
@@ -84,7 +136,15 @@ void process_file(const char* filepath, Config* cfg) {
             break; // Конец файла или ошибка чтения
         }
 
-        printf("DEBUG: Прочитано %zu байт на смещении %08x\n", bytes_read, current_offset);
+
+        // Если форматная строка не задана, используем стандартный вывод
+        if (cfg->format_str == NULL) {
+            print_standard_format(buffer, bytes_read, current_offset, cfg);
+        }
+        else {
+            // Вывод если задана форматная строка
+        }
+
 
         // Обновляем счетчики
         total_read += bytes_read;
