@@ -70,7 +70,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Тест
+
+    // Тесты
+    // Тест считывания аргументов
     printf("File:        %s\n", cfg.file_name ? cfg.file_name : "(not set)");
     printf("Directory:   %s\n", cfg.dir ? cfg.dir : "(not set)");
     printf("Offset:      %d\n", cfg.offset);
@@ -78,6 +80,15 @@ int main(int argc, char* argv[]) {
     printf("Group size:  %d\n", cfg.group_size);
     printf("Count:       %d\n", cfg.count);
     printf("Format:      %s\n", cfg.format_str ? cfg.format_str : "(standard)");
+
+    // Тест print_hex_group
+    // <chunk> - test_chunk2[] = { 0x30, 0x40 }
+    // <bytes_available> - 2
+    // <group_size> - 4
+    unsigned char test_chunk2[] = { 0x30, 0x40 };
+    printf("Test print_hex_group: ");
+    print_hex_group(test_chunk2, 2, 4);
+    printf("\n");
 
     // ...
 
