@@ -4,15 +4,14 @@ lib_main.c - главный модуль библиотеки.
 Группа МК-101
 */
 
-// Функция для вывода в шестнадцатеричном виде
-// <chunk> - Указатель на буфер
-// <bytes_available> - кол-во байтов которые мы считали из файла
-// <group_size> - размер буфера
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "config.h"
 
+// Функция для вывода в шестнадцатеричном виде
+// <chunk> - Указатель на буфер
+// <bytes_available> - кол-во байтов которые мы считали из файла
+// <group_size> - размер буфера
 void print_hex_group(const unsigned char* chunk, int bytes_available, int group_size) {
     const char hex_chars[] = "0123456789ABCDEF";
     // Little-Endian:
@@ -39,8 +38,18 @@ void process_file(const char* filepath, Config* cfg) {
         return;
     }
 
-    // Сдвигаем указатель на offset
+    // Проверяем, подходит ли offset под файл + сдвигаем курсор на offset байт
+    fseek(file, 0, SEEK_END);          // Сдвигаемся в конец файла
+    long file_size = ftell(file);      // Узнаём размер файла
+
+    if (cfg->offset > file_size) {
+        fprintf(stderr, "Warning: offset exceeds file size.\n");
+        fclose(file);
+        return;
+    }
+    // Сдвигаем указатель на offset байт
     if (cfg->offset > 0) fseek(file, cfg->offset, SEEK_SET);
+
 
     // Вычисляем размер буфера для одной строки вывода и выделяем память
     int line_size = cfg->group_size * cfg->count;               // line_size - кол-во байт нужное для считывания за блок
@@ -52,6 +61,7 @@ void process_file(const char* filepath, Config* cfg) {
     }
 
 
+    int current_offset = cfg->offset;   // Наше положение в файле
     int total_read = 0;                 // Сколько байт мы уже прочитали суммарно
 
     // 
@@ -74,8 +84,11 @@ void process_file(const char* filepath, Config* cfg) {
             break; // Конец файла или ошибка чтения
         }
 
+        printf("DEBUG: Прочитано %zu байт на смещении %08x\n", bytes_read, current_offset);
+
         // Обновляем счетчики
         total_read += bytes_read;
+        current_offset += bytes_read;
     }
 
     // Очищаем память и закрываем файл
