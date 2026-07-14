@@ -30,13 +30,13 @@ int main(int argc, char* argv[]) {
             cfg.file_name = optarg;
             break;
         case 'o':
-            if (sscanf(optarg, "%d", &cfg.offset) != 1) {
+            if (sscanf(optarg, "%llu", &cfg.offset) != 1) {
                 fprintf(stderr, "Error: Option -o requires an integer argument.\n");
                 return 1;
             }
             break;
         case 'l':
-            if (sscanf(optarg, "%d", &cfg.length) != 1) {
+            if (sscanf(optarg, "%lld", &cfg.length) != 1) {
                 fprintf(stderr, "Error: Option -l requires an integer argument.\n");
                 return 1;
             }
