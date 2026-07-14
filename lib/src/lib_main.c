@@ -99,7 +99,7 @@ void process_file(const char* filepath, Config* cfg) {
         return;
     }
     // Сдвигаем указатель на offset байт
-    if (cfg->offset > 0) fseek(file, cfg->offset, SEEK_SET);
+    fseek(file, cfg->offset, SEEK_SET);
 
 
     // Вычисляем размер буфера для одной строки вывода и выделяем память
