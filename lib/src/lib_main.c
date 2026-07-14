@@ -35,7 +35,7 @@ void print_hex_group(const unsigned char* chunk, int bytes_available, int group_
 // <cfg> - Указатель на структуру с аргументамми
 void print_standard_format(const unsigned char* buffer, int bytes_read, int current_offset, Config* cfg) {
     // Выводим текущее смещение
-    printf("%08x: ", current_offset);
+    printf("%08X  ", current_offset);
 
     // Выводим шестнадцатеричные группы
     for (int i = 0; i < cfg->count; i++) {
@@ -111,6 +111,20 @@ void process_directory(const char* dirpath, Config* cfg) {
         char filepath[1024];
         // Создаём путь до файла и сохраняем в filepath
         snprintf(filepath, sizeof(filepath), "%s\\%s", dirpath, findFileData.cFileName); 
+
+        // Защита от дубликатов, приводим все относительные пути в абсолютным
+        if (cfg->file_name != NULL) {
+            char abs_path_cfg[MAX_PATH];
+            char abs_path_dir[MAX_PATH];
+            // Перевод в абсолютный путь
+            GetFullPathNameA(cfg->file_name, MAX_PATH, abs_path_cfg, NULL);
+            GetFullPathNameA(filepath, MAX_PATH, abs_path_dir, NULL);
+
+            // Сравниваем строки без учета регистра при помощи _stricmp
+            if (_stricmp(abs_path_cfg, abs_path_dir) == 0) {
+                continue; // Если пути указывают на один и тот же файл то не выводим его второй раз
+            }
+        }
 
         printf("\n*File: %s\n", filepath);
         // Открытие файла
