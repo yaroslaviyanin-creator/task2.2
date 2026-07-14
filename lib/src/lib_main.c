@@ -151,17 +151,26 @@ void print_custom_format(const unsigned char* buffer, int bytes_read, int curren
         if (*fmt == '\\') {
             fmt++; // Смотрим следующий символ за слэшем
             // Обработка спецсимволов (\n, \t, \r, \\)
-            if (*fmt == 'n')        { printf("\n"); }
-            else if (*fmt == 't')   { printf("\t"); }
-            else if (*fmt == 'r')   { printf("\r"); }
-            else if (*fmt == '\\')  { printf("\\"); }
-            else                    { printf("%c", *fmt); }
+            if (*fmt == 'n'){ 
+                printf("\n"); 
+            }
+            else if (*fmt == 't'){ 
+                printf("\t"); 
+            }
+            else if (*fmt == 'r'){ 
+                printf("\r"); 
+            }
+            else if (*fmt == '\\'){ 
+                printf("\\"); 
+            }
+            else{ 
+                printf("%c", *fmt); 
+            }
             fmt++; // Смотрим следующий символ
         }
+
         else if (*fmt == '%') {
-            fmt++; // Смотрим следующий символ за процентом
-            
-            // ...
+            fmt++; // Смотрим следующий символ за процента
             if (*fmt == 'i') {
                 printf("%d", line_index);
                 fmt++;
@@ -170,12 +179,58 @@ void print_custom_format(const unsigned char* buffer, int bytes_read, int curren
                 printf("%08X", current_offset);
                 fmt++;
             }
+            else if (isdigit((unsigned char)*fmt)) { // isdigit - проверка, является ли символ цифрой
+                // Если после % идет цифра, значит это спецификатор группы
+                int chunk_index = 0;                 // Спецификатор группы
+
+                // Считываем числа(символы) пока они не закончатся
+                while (isdigit((unsigned char)*fmt)) {
+                    chunk_index = chunk_index * 10 + (*fmt - '0'); // Превращаем символы в число
+                    fmt++;
+                }
+                char type = *fmt;           // type - типо вывода, а fmt указывает на него в нашей строке
+                if (type != '\0') fmt++;    // Проверка конца
+                int start_byte = chunk_index * cfg->group_size; // Байт, с которого начинается нужная нам часть
+
+                // Проверяем, есть ли вообще такие данные в прочитанном буфере
+                if (start_byte < bytes_read) {
+                    int chunk_bytes = bytes_read - start_byte; // Кол-во доступных нам байт в буфере
+                    if (chunk_bytes > cfg->group_size) {
+                        chunk_bytes = cfg->group_size;
+                    }
+
+                    // Выводим в нужном формате
+                    if (type == 'x') {
+                        // Используем функцию вывода HEX
+                        print_hex_group(&buffer[start_byte], chunk_bytes, cfg->group_size);
+                    }
+                    else if (type == 'c') {
+                        // Выводим как ASCII символы
+                        for (int j = 0; j < chunk_bytes; j++) {
+                            unsigned char c = buffer[start_byte + j];
+                            if (c >= 32 && c <= 126) printf("%c", c);
+                            else printf(".");
+                        }
+                    }
+                }
+                else {
+                    // Если данных нет (конец файла), выводим пробелы для сохранения выравнивания
+                    if (type == 'x') {
+                        for (int j = 0; j < cfg->group_size * 2; j++) printf(" ");
+                    }
+                    else if (type == 'c') {
+                        for (int j = 0; j < cfg->group_size; j++) printf(" ");
+                    }
+                }
+            }
             else {
-                fmt++;
+                // Если после % идет еще один %, просто печатаем % и перешагиваем
+                printf("%%");
+                if (*fmt == '%') fmt++;
             }
         }
         else {
-            // Если обычная функция, то выводим
+            // Если обычный символ, то просто выводим
             printf("%c", *fmt);
             fmt++;
         }

@@ -10,6 +10,7 @@ lib_main.h - заголовочный файл модуля lib_main.c.
 #include <windows.h>
 #include <string.h>
 #include "config.h"
+#include <ctype.h>
 
 // Функция для вывода в шестнадцатеричном виде
 // <chunk> - Указатель на буфер
