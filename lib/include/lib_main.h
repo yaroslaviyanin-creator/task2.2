@@ -18,10 +18,10 @@ lib_main.h - заголовочный файл модуля lib_main.c.
 void print_hex_group(const unsigned char* chunk, int bytes_available, int group_size);
 
 // Функция для вывод на экран
-// <buffer> - Указатель на массив считанных байтов
-// <bytes_read> - Количество реально считанных байтов, находящихся в буфере
-// <current_offset> - Текущее смещение от начала файла
-// <cfg> - Указатель на структуру с аргументамми
+// <buffer> - указатель на массив считанных байтов
+// <bytes_read> - количество реально считанных байтов, находящихся в буфере
+// <current_offset> - текущее смещение от начала файла
+// <cfg> - указатель на структуру с аргументамми
 void print_standard_format(const unsigned char* buffer, int bytes_read, int current_offset, Config* cfg);
 
 
@@ -30,4 +30,16 @@ void print_standard_format(const unsigned char* buffer, int bytes_read, int curr
 // <cfg> - указатель на структуру с настройками
 void process_directory(const char* dirpath, Config* cfg);
 
+
+// Функция для обработки и побайтового вывода одного файла
+// <filepath> - путь к файлу, который необходимо открыть и прочитать
+// <cfg> - указатель на структуру с настройками
 void process_file(const char* filepath, Config* cfg);
+
+// Функция для вывода данных по форматной строке
+// <buffer> - указатель на массив считанных байтов
+// <bytes_read> - количество реально считанных байтов, находящихся в буфере
+// <current_offset> - текущее смещение от начала файла
+// <line_index> - индекс текущей строки, начиная с 0
+// <cfg> - указатель на структуру с аргументамми
+void print_custom_format(const unsigned char* buffer, int bytes_read, int current_offset, int line_index, Config* cfg);

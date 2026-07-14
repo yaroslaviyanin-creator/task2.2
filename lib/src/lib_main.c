@@ -7,7 +7,7 @@ lib_main.c - главный модуль библиотеки.
 #include "lib_main.h"
 
 // Функция для вывода в шестнадцатеричном виде
-// <chunk> - Указатель на буфер
+// <chunk> - указатель на буфер
 // <bytes_available> - кол-во байтов которые мы считали из файла
 // <group_size> - размер буфера
 void print_hex_group(const unsigned char* chunk, int bytes_available, int group_size) {
@@ -29,10 +29,10 @@ void print_hex_group(const unsigned char* chunk, int bytes_available, int group_
 
 
 // Функция для вывод на экран
-// <buffer> - Указатель на массив считанных байтов
-// <bytes_read> - Количество реально считанных байтов, находящихся в буфере
-// <current_offset> - Текущее смещение от начала файла
-// <cfg> - Указатель на структуру с аргументамми
+// <buffer> - указатель на массив считанных байтов
+// <bytes_read> - количество реально считанных байтов, находящихся в буфере
+// <current_offset> - текущее смещение от начала файла
+// <cfg> - указатель на структуру с аргументамми
 void print_standard_format(const unsigned char* buffer, int bytes_read, int current_offset, Config* cfg) {
     // Выводим текущее смещение
     printf("%08X  ", current_offset);
@@ -81,7 +81,7 @@ void print_standard_format(const unsigned char* buffer, int bytes_read, int curr
 
 // Функция для обхода директории
 // <dirpath> - путь к папке
-// <cfg> - указатель на структуру с настройками
+// <cfg> - указатель на структуру с аргументамми
 void process_directory(const char* dirpath, Config* cfg) {
     WIN32_FIND_DATAA findFileData;
 
@@ -137,8 +137,55 @@ void process_directory(const char* dirpath, Config* cfg) {
 }
 
 
+// Функция для вывода данных по форматной строке
+// <buffer> - указатель на массив считанных байтов
+// <bytes_read> - количество реально считанных байтов, находящихся в буфере
+// <current_offset> - текущее смещение от начала файла
+// <line_index> - индекс текущей строки, начиная с 0
+// <cfg> - указатель на структуру с аргументамми
+void print_custom_format(const unsigned char* buffer, int bytes_read, int current_offset, int line_index, Config* cfg) {
+    if (cfg->format_str == NULL) return;
+    const char* fmt = cfg->format_str;
+
+    while (*fmt != '\0') {
+        if (*fmt == '\\') {
+            fmt++; // Смотрим следующий символ за слэшем
+            // Обработка спецсимволов (\n, \t, \r, \\)
+            if (*fmt == 'n')        { printf("\n"); }
+            else if (*fmt == 't')   { printf("\t"); }
+            else if (*fmt == 'r')   { printf("\r"); }
+            else if (*fmt == '\\')  { printf("\\"); }
+            else                    { printf("%c", *fmt); }
+            fmt++; // Смотрим следующий символ
+        }
+        else if (*fmt == '%') {
+            fmt++; // Смотрим следующий символ за процентом
+            
+            // ...
+            if (*fmt == 'i') {
+                printf("%d", line_index);
+                fmt++;
+            }
+            else if (*fmt == 'n') {
+                printf("%08X", current_offset);
+                fmt++;
+            }
+            else {
+                fmt++;
+            }
+        }
+        else {
+            // Если обычная функция, то выводим
+            printf("%c", *fmt);
+            fmt++;
+        }
+    }
+}
 
 
+// Функция для обработки и побайтового вывода одного файла
+// <filepath> - путь к файлу, который необходимо открыть и прочитать
+// <cfg> - указатель на структуру с настройками
 void process_file(const char* filepath, Config* cfg) {
     // Открываем файл
     FILE* file = fopen(filepath, "rb");
@@ -172,7 +219,7 @@ void process_file(const char* filepath, Config* cfg) {
 
     int current_offset = cfg->offset;   // Наше положение в файле
     int total_read = 0;                 // Сколько байт мы уже прочитали суммарно
-
+    int line_index = 0;                 // Счетчик строк
 
     // Главный цикл чтения файла блоками с учетом лимита (-l) и конца файла
     while (1) {
@@ -194,19 +241,21 @@ void process_file(const char* filepath, Config* cfg) {
             break; // Конец файла или ошибка чтения
         }
 
-
-        // Если форматная строка не задана, используем стандартный вывод
+        // Проверка форматной строки
         if (cfg->format_str == NULL) {
+            // Стандартный вывод
             print_standard_format(buffer, bytes_read, current_offset, cfg);
         }
         else {
-            // Вывод если задана форматная строка
+            // Кастомный вывод
+            print_custom_format(buffer, bytes_read, current_offset, line_index, cfg);
         }
 
 
         // Обновляем счетчики
         total_read += bytes_read;
         current_offset += bytes_read;
+        line_index++;
     }
 
     // Очищаем память и закрываем файл
