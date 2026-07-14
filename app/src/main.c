@@ -75,12 +75,15 @@ int main(int argc, char* argv[]) {
     printf("Count:       %d\n", cfg.count);
     printf("Format:      %s\n", cfg.format_str ? cfg.format_str : "(standard)");
 
-    // Проверка, есть ли имя файла
+
+    // Обрабатываем одиночный файл
     if (cfg.file_name != NULL) {
-        printf("\n");
+        printf("\n*File: %s\n", cfg.file_name);
         process_file(cfg.file_name, &cfg);
     }
-    else if (cfg.dir != NULL) {
+
+    // Обрабатываем директорию
+    if (cfg.dir != NULL) {
         process_directory(cfg.dir, &cfg);
     }
 
