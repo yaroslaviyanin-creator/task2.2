@@ -65,19 +65,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-
-
-    // Проверка, есть ли имя файла, либо директория
-    if (cfg.file_name == NULL && cfg.dir == NULL) {
-        fprintf(stderr, "Error: input file (-i) or directory (-d) must be specified.\n");
-        return 1;
-    }
-
-    // Проверка, есть ли имя файла
-    if (cfg.file_name != NULL) {
-        process_file(cfg.file_name, &cfg);
-    }
-
     // Тесты
     // Тест считывания аргументов
     printf("File:        %s\n", cfg.file_name ? cfg.file_name : "(not set)");
@@ -88,14 +75,17 @@ int main(int argc, char* argv[]) {
     printf("Count:       %d\n", cfg.count);
     printf("Format:      %s\n", cfg.format_str ? cfg.format_str : "(standard)");
 
-    // Тест print_hex_group
-    // <chunk> - test_chunk2[] = { 0x30, 0x40 }
-    // <bytes_available> - 2
-    // <group_size> - 4
-    unsigned char test_chunk2[] = { 0x30, 0x40 };
-    printf("Test print_hex_group: ");
-    print_hex_group(test_chunk2, 2, 4);
-    printf("\n");
+
+    // Обрабатываем одиночный файл
+    if (cfg.file_name != NULL) {
+        printf("\n*File: %s\n", cfg.file_name);
+        process_file(cfg.file_name, &cfg);
+    }
+
+    // Обрабатываем директорию
+    if (cfg.dir != NULL) {
+        process_directory(cfg.dir, &cfg);
+    }
 
     // ...
 
