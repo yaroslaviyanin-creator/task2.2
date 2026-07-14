@@ -4,9 +4,7 @@ lib_main.c - главный модуль библиотеки.
 Группа МК-101
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "config.h"
+#include "lib_main.h"
 
 // Функция для вывода в шестнадцатеричном виде
 // <chunk> - Указатель на буфер
@@ -79,6 +77,52 @@ void print_standard_format(const unsigned char* buffer, int bytes_read, int curr
     }
     printf("\n");
 }
+
+
+// Функция для обхода директории
+// <dirpath> - путь к папке
+// <cfg> - указатель на структуру с настройками
+void process_directory(const char* dirpath, Config* cfg) {
+    WIN32_FIND_DATAA findFileData;
+
+    char search_path[1024];
+    // Добавляем "\*" для поиска в директории, и сохраняем адрес в search_path
+    snprintf(search_path, sizeof(search_path), "%s\\*", dirpath);
+
+    // Ищем первый файл и сохраняем его номер в hFind
+    HANDLE hFind = FindFirstFileA(search_path, &findFileData);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        fprintf(stderr, "Error: Cannot open directory '%s'\n", dirpath);
+        return;
+    }
+
+    // Проходим по всем файлам
+    do {
+        // Пропускаем системные папки "." и ".."
+        if (strcmp(findFileData.cFileName, ".") == 0 || strcmp(findFileData.cFileName, "..") == 0) {
+            continue;
+        }
+
+        // Пропускаем вложенные папки
+        if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            continue;
+        }
+
+        char filepath[1024];
+        // Создаём путь до файла и сохраняем в filepath
+        snprintf(filepath, sizeof(filepath), "%s\\%s", dirpath, findFileData.cFileName); 
+
+        printf("\n*File: %s\n", filepath);
+        // Открытие файла
+        process_file(filepath, cfg);
+
+    } while (FindNextFileA(hFind, &findFileData) != 0); // Ищем следующий файл
+
+    // Закрываем дескриптор поиска
+    FindClose(hFind);
+}
+
+
 
 
 void process_file(const char* filepath, Config* cfg) {
