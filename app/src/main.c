@@ -65,17 +65,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Тесты
-    // Тест считывания аргументов
-    printf("File:        %s\n", cfg.file_name ? cfg.file_name : "(not set)");
-    printf("Directory:   %s\n", cfg.dir ? cfg.dir : "(not set)");
-    printf("Offset:      %d\n", cfg.offset);
-    printf("Length:      %d\n", cfg.length);
-    printf("Group size:  %d\n", cfg.group_size);
-    printf("Count:       %d\n", cfg.count);
-    printf("Format:      %s\n", cfg.format_str ? cfg.format_str : "(standard)");
-
-
     // Обрабатываем одиночный файл
     if (cfg.file_name != NULL) {
         printf("\n*File: %s\n", cfg.file_name);
@@ -86,8 +75,6 @@ int main(int argc, char* argv[]) {
     if (cfg.dir != NULL) {
         process_directory(cfg.dir, &cfg);
     }
-
-    // ...
 
     return 0;
 }
